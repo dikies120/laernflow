@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { FaChartBar, FaBook, FaHistory, FaLock } from "react-icons/fa";
+import { FaChartBar, FaBook, FaHistory } from "react-icons/fa";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const Dashboard = () => {
+const Materi = () => {
   const [materiList, setMateriList] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     fetch("http://localhost:5000/api/materi/crud-materi")
@@ -17,7 +18,6 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    console.log("Logging out...");
     alert("You have been logged out!");
     navigate("/");
   };
@@ -35,32 +35,37 @@ const Dashboard = () => {
         <nav className="space-y-4">
           <button
             onClick={() => handleNavigation("/dashboard")}
-            className="flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-800 text-left w-full"
+            className={`flex items-center gap-2 text-left w-full font-semibold ${
+              location.pathname === "/dashboard"
+                ? "text-blue-600"
+                : "text-gray-600 hover:text-blue-800"
+            }`}
           >
             <FaChartBar />
             <span>Dashboard</span>
           </button>
           <button
             onClick={() => handleNavigation("/materi")}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-800 text-left w-full"
+            className={`flex items-center gap-2 text-left w-full font-semibold ${
+              location.pathname.startsWith("/materi")
+                ? "text-blue-600"
+                : "text-gray-600 hover:text-blue-800"
+            }`}
           >
             <FaBook />
             <span>Materi</span>
           </button>
           <button
             onClick={() => handleNavigation("/quiz-history")}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-800 text-left w-full"
+            className={`flex items-center gap-2 text-left w-full font-semibold ${
+              location.pathname === "/quiz-history"
+                ? "text-blue-600"
+                : "text-gray-600 hover:text-blue-800"
+            }`}
           >
             <FaHistory />
             <span>Quiz History</span>
           </button>
-          {/* <button
-            onClick={() => handleNavigation("/profile")}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-800 text-left w-full"
-          >
-            <FaHistory />
-            <span>Profile</span>
-          </button> */}
         </nav>
         <button
           onClick={handleLogout}
@@ -72,36 +77,6 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-8 ml-64">
-        {/* Profile Card */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img
-              src="https://randomuser.me/api/portraits/men/75.jpg"
-              className="w-24 h-24 rounded-lg"
-              alt="Profile"
-            />
-            <div>
-              <h2 className="text-xl font-bold text-blue-700">Ambagus</h2>
-              <p>Bonus booster 24lv</p>
-            </div>
-          </div>
-          <div className="flex gap-6">
-            <div className="text-center">
-              <p className="text-lg font-bold">27</p>
-              <p className="text-gray-500">Quiz Passed</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold">27min</p>
-              <p className="text-gray-500">Fastest Time</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold">200</p>
-              <p className="text-gray-500">Correct Answers</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Daftar Materi seperti di page materi */}
         <h3 className="text-lg font-semibold mb-4">Daftar Materi</h3>
         <div className="grid grid-cols-3 gap-4">
           {materiList.map((materi) => (
@@ -119,4 +94,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Materi;
