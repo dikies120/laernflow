@@ -27,13 +27,12 @@ const LoginForm = () => {
       const data = await response.json()
 
       if (response.ok) {
-        console.log('Login successful:', data)
+        // Simpan user ke localStorage/sessionStorage sesuai rememberMe
         if (rememberMe) {
           localStorage.setItem('user', JSON.stringify(data.user))
         } else {
           sessionStorage.setItem('user', JSON.stringify(data.user))
         }
-        
         navigate('/dashboard')
       } else {
         setErrorMessage(data.message || 'Login failed. Please check your credentials.')

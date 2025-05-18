@@ -1,61 +1,102 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaChartBar, FaBook, FaUserGraduate, FaUserCheck } from "react-icons/fa";
+import { FaChartBar, FaBook, FaUserGraduate } from "react-icons/fa";
+import axios from "axios";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+  Title,
+} from "chart.js";
+
+ChartJS.register(
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+  Title
+);
 
 const DashboardAdmin = () => {
   const navigate = useNavigate();
-  const handleNavigation = (path) => {
-    navigate(path);
-  };
+  const [siswaBaru, setSiswaBaru] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    siswa: 0,
+    materi: 0,
+    quiz: 10,
+  });
+
+  // Contoh data pertumbuhan siswa per minggu
+  const pertumbuhanSiswa = [10, 20, 40, 60, 80, 100, 120];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [userRes, materiRes] = await Promise.all([
+          axios.get("/api/users/siswa"),
+          axios.get("/api/materi/crud-materi"),
+        ]);
+
+        if (userRes.data.success) {
+          const users = userRes.data.users;
+          setStats((prev) => ({ ...prev, siswa: users.length }));
+          setSiswaBaru(users.slice(0, 5));
+        }
+
+        if (Array.isArray(materiRes.data)) {
+          setStats((prev) => ({ ...prev, materi: materiRes.data.length }));
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleNavigation = (path) => navigate(path);
 
   const handleLogout = () => {
-    console.log("Logging out...");
     alert("You have been logged out!");
     navigate("/");
   };
 
-  // Dummy data untuk contoh
-  const dummyStats = {
-    siswa: 120,
-    materi: 15,
-    quiz: 10,
-    siswaAktif: 25,
+  const chartData = {
+    labels: pertumbuhanSiswa.map((_, idx) => `Minggu ${idx + 1}`),
+    datasets: [
+      {
+        label: "Pertumbuhan Siswa",
+        data: pertumbuhanSiswa,
+        fill: false,
+        borderColor: "rgb(59, 130, 246)",
+        backgroundColor: "rgba(59, 130, 246, 0.2)",
+        tension: 0.3,
+        pointBorderWidth: 2,
+      },
+    ],
   };
 
-  const siswaBaru = [
-    { id: 1, nama: "Budi", email: "budi@email.com" },
-    { id: 2, nama: "Siti", email: "siti@email.com" },
-    { id: 3, nama: "Andi", email: "andi@email.com" },
-  ];
-
-  const aktivitasTerbaru = [
-    { id: 1, aktivitas: "Budi menyelesaikan Quiz 1", waktu: "1 menit lalu" },
-    { id: 2, aktivitas: "Siti mendaftar akun", waktu: "5 menit lalu" },
-    { id: 3, aktivitas: "Andi menyelesaikan Materi 2", waktu: "10 menit lalu" },
-  ];
-
-  const pertumbuhanSiswa = [10, 20, 40, 60, 80, 100, 120];
-
-  const GrafikPertumbuhan = ({ data }) => (
-    <div className="bg-white p-4 rounded shadow mt-6">
-      <h4 className="font-semibold mb-2">Grafik Pertumbuhan Siswa</h4>
-      <div className="flex items-end h-32 gap-2">
-        {data.map((val, idx) => (
-          <div
-            key={idx}
-            className="bg-blue-500 w-8"
-            style={{ height: `${val / Math.max(...data) * 100}%` }}
-            title={`Minggu ${idx + 1}: ${val} siswa`}
-          ></div>
-        ))}
-      </div>
-      <div className="flex justify-between text-xs mt-2 text-gray-500">
-        {data.map((_, idx) => (
-          <span key={idx}>M{idx + 1}</span>
-        ))}
-      </div>
-    </div>
-  );
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" },
+      title: {
+        display: true,
+        text: "Grafik Pertumbuhan Siswa per Minggu",
+        font: { size: 18 },
+      },
+    },
+  };
 
   return (
     <div className="flex min-h-screen bg-purple-100">
@@ -96,65 +137,53 @@ const DashboardAdmin = () => {
       {/* Main Content */}
       <main className="flex-1 p-8 ml-64">
         {/* Statistik Ringkas */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded shadow p-4 flex flex-col items-center">
-            <FaUserGraduate className="text-blue-600 text-2xl mb-2" />
-            <div className="text-2xl font-bold">{dummyStats.siswa}</div>
+        <div className="grid grid-cols-3 gap-6 mb-10">
+          <div className="bg-white rounded shadow p-6 flex flex-col items-center">
+            <FaUserGraduate className="text-blue-600 text-3xl mb-2" />
+            <div className="text-3xl font-bold">{stats.siswa}</div>
             <div className="text-gray-600">Total Siswa</div>
           </div>
-          <div className="bg-white rounded shadow p-4 flex flex-col items-center">
-            <FaBook className="text-green-600 text-2xl mb-2" />
-            <div className="text-2xl font-bold">{dummyStats.materi}</div>
+          <div className="bg-white rounded shadow p-6 flex flex-col items-center">
+            <FaBook className="text-green-600 text-3xl mb-2" />
+            <div className="text-3xl font-bold">{stats.materi}</div>
             <div className="text-gray-600">Total Materi</div>
           </div>
-          <div className="bg-white rounded shadow p-4 flex flex-col items-center">
-            <FaChartBar className="text-purple-600 text-2xl mb-2" />
-            <div className="text-2xl font-bold">{dummyStats.quiz}</div>
+          <div className="bg-white rounded shadow p-6 flex flex-col items-center">
+            <FaChartBar className="text-purple-600 text-3xl mb-2" />
+            <div className="text-3xl font-bold">{stats.quiz}</div>
             <div className="text-gray-600">Total Quiz</div>
-          </div>
-          <div className="bg-white rounded shadow p-4 flex flex-col items-center">
-            <FaUserCheck className="text-orange-600 text-2xl mb-2" />
-            <div className="text-2xl font-bold">{dummyStats.siswaAktif}</div>
-            <div className="text-gray-600">Siswa Aktif Hari Ini</div>
           </div>
         </div>
 
         {/* Daftar Siswa Terbaru */}
-        <div className="bg-white rounded shadow p-4 mb-8">
-          <h4 className="font-semibold mb-2">Siswa Terbaru</h4>
-          <table className="w-full text-left">
-            <thead>
-              <tr>
-                <th className="py-1">Nama</th>
-                <th className="py-1">Email</th>
-              </tr>
-            </thead>
-            <tbody>
-              {siswaBaru.map((siswa) => (
-                <tr key={siswa.id}>
-                  <td className="py-1">{siswa.nama}</td>
-                  <td className="py-1">{siswa.email}</td>
+        <div className="bg-white rounded shadow p-6 mb-10">
+          <h4 className="font-semibold mb-4 text-lg">Siswa Terbaru</h4>
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-gray-600 border-b">
+                  <th className="py-2">Nama</th>
+                  <th className="py-2">Email</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {siswaBaru.map((siswa) => (
+                  <tr key={siswa.id} className="border-b hover:bg-gray-50">
+                    <td className="py-2">{siswa.nama}</td>
+                    <td className="py-2">{siswa.email}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* Daftar Aktivitas Terbaru */}
-        <div className="bg-white rounded shadow p-4 mb-8">
-          <h4 className="font-semibold mb-2">Aktivitas Terbaru</h4>
-          <ul>
-            {aktivitasTerbaru.map((item) => (
-              <li key={item.id} className="py-1 border-b last:border-b-0">
-                <span className="font-medium">{item.aktivitas}</span>
-                <span className="text-xs text-gray-500 ml-2">{item.waktu}</span>
-              </li>
-            ))}
-          </ul>
+        {/* Grafik Pertumbuhan */}
+        <div className="bg-white rounded shadow p-6">
+          <Line data={chartData} options={chartOptions} />
         </div>
-
-        {/* Grafik Pertumbuhan Siswa */}
-        <GrafikPertumbuhan data={pertumbuhanSiswa} />
       </main>
     </div>
   );

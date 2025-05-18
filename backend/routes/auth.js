@@ -148,4 +148,30 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Endpoint untuk mengambil semua user dari tabel users
+router.get('/siswa', async (req, res) => {
+  let conn = null;
+  try {
+    conn = await getConnection();
+    const result = await conn.execute(
+      `SELECT USER_ID, USERNAME, EMAIL, CREATED_DATE FROM users ORDER BY CREATED_DATE DESC`
+    );
+    // Map hasil ke array of object
+    const users = result.rows.map(row => ({
+      id: row.USER_ID,
+      nama: row.USERNAME,
+      email: row.EMAIL,
+      tanggal: row.CREATED_DATE
+    }));
+    res.json({ success: true, users });
+  } catch (err) {
+    console.error('Fetch users error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch users' });
+  } finally {
+    if (conn) {
+      try { await conn.close(); } catch (err) {}
+    }
+  }
+});
+
 module.exports = router;

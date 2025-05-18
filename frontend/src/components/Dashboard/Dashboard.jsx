@@ -1,15 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaChartBar, FaBook, FaHistory, FaLock } from "react-icons/fa";
+import { FaChartBar, FaBook, FaHistory, FaPlayCircle } from "react-icons/fa";
+
+const colorPalettes = [
+  "from-purple-600 via-pink-500 to-red-400",
+  "from-blue-600 via-cyan-500 to-green-400",
+  "from-yellow-500 via-orange-400 to-pink-500",
+  "from-green-600 via-lime-400 to-yellow-300",
+  "from-indigo-700 via-blue-400 to-teal-300",
+  "from-rose-500 via-fuchsia-500 to-indigo-500",
+];
 
 const Dashboard = () => {
   const [materiList, setMateriList] = useState([]);
+  const [user, setUser] = useState({ USERNAME: "User" });
   const navigate = useNavigate();
 
   useEffect(() => {
     fetch("http://localhost:5000/api/materi/crud-materi")
       .then(res => res.json())
       .then(data => setMateriList(data));
+    // Ambil user dari localStorage/sessionStorage
+    let userData = localStorage.getItem("user") || sessionStorage.getItem("user");
+    if (userData) {
+      userData = JSON.parse(userData);
+      if (userData.USERNAME) {
+        setUser(userData);
+      }
+    }
   }, []);
 
   const handleNavigation = (path) => {
@@ -17,14 +35,30 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    console.log("Logging out...");
     alert("You have been logged out!");
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     navigate("/");
   };
 
-  // Saat kotak materi diklik, masuk ke halaman detail materi
   const handleMateriClick = (id) => {
     navigate(`/materi/${id}`);
+  };
+
+  // Gambar random dengan variasi keyword
+  const getRandomImage = (keyword, idx) => {
+    const keywords = [
+      keyword,
+      "biology",
+      "school",
+      "science",
+      "education",
+      "learning",
+      "students",
+      "classroom",
+    ];
+    const query = keywords.filter(Boolean).join(",");
+    return `https://source.unsplash.com/400x300/?${query}&sig=${idx}`;
   };
 
   return (
@@ -54,13 +88,6 @@ const Dashboard = () => {
             <FaHistory />
             <span>Quiz History</span>
           </button>
-          {/* <button
-            onClick={() => handleNavigation("/profile")}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-800 text-left w-full"
-          >
-            <FaHistory />
-            <span>Profile</span>
-          </button> */}
         </nav>
         <button
           onClick={handleLogout}
@@ -81,39 +108,61 @@ const Dashboard = () => {
               alt="Profile"
             />
             <div>
-              <h2 className="text-xl font-bold text-blue-700">Ambagus</h2>
-              <p>Bonus booster 24lv</p>
-            </div>
+  <h2 className="text-xl font-bold text-blue-700">{user.USERNAME}</h2>
+  <p className="text-gray-500 text-sm">{user.EMAIL}</p>
+</div>
           </div>
           <div className="flex gap-6">
             <div className="text-center">
               <p className="text-lg font-bold">27</p>
               <p className="text-gray-500">Quiz Passed</p>
             </div>
-            <div className="text-center">
-              <p className="text-lg font-bold">27min</p>
-              <p className="text-gray-500">Fastest Time</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold">200</p>
-              <p className="text-gray-500">Correct Answers</p>
-            </div>
           </div>
         </div>
 
         {/* Daftar Materi seperti di page materi */}
-        <h3 className="text-lg font-semibold mb-4">Daftar Materi</h3>
-        <div className="grid grid-cols-3 gap-4">
-          {materiList.map((materi) => (
-            <div
-              key={materi.ID}
-              className="relative p-4 rounded-lg h-40 flex items-end bg-purple-700 text-white cursor-pointer hover:bg-purple-800 transition"
-              onClick={() => handleMateriClick(materi.ID)}
-            >
-              <p className="font-semibold">{materi.NAMA_MATERI}</p>
-            </div>
-          ))}
-        </div>
+        <h3 className="text-xl font-bold mb-6 text-gray-800">📚 Daftar Materi</h3>
+        {materiList.length === 0 ? (
+          <p className="text-gray-500">Belum ada materi tersedia.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            {materiList.map((materi, index) => {
+              const palette = colorPalettes[index % colorPalettes.length];
+              return (
+                <div
+                  key={materi.ID || index}
+                  className="relative rounded-2xl overflow-hidden shadow-xl cursor-pointer group transform hover:scale-105 transition border-2 border-white"
+                  onClick={() => handleMateriClick(materi.ID)}
+                  style={{ minHeight: 200 }}
+                >
+                  {/* <img
+                    src={
+                      materi.SAMPUL && materi.SAMPUL.trim() !== ""
+                        ? materi.SAMPUL
+                        : getRandomImage(materi.NAMA_MATERI, index)
+                    }
+                    alt={materi.NAMA_MATERI || "Materi"}
+                    className="w-full h-40 object-cover"
+                  /> */}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t ${palette} opacity-80 group-hover:opacity-90 transition`}
+                  ></div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <FaPlayCircle className="text-white text-4xl mb-2 opacity-90 group-hover:scale-110 transition" />
+                    <p className="text-white font-bold text-lg px-4 text-center drop-shadow-lg">
+                      {materi.NAMA_MATERI || "Tanpa Judul"}
+                    </p>
+                    {materi.KELAS && (
+                      <span className="mt-2 px-3 py-1 bg-white/80 text-purple-700 rounded-full text-xs font-semibold shadow">
+                        Kelas {materi.KELAS}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </main>
     </div>
   );

@@ -6,6 +6,7 @@ const { closePoolAndExit } = require('./db');
 const cors = require('cors')
 const adminRoutes = require('./routes/admin');
 const materiRoutes = require('./routes/materi');
+const usersRoutes = require('./routes/users');
 
 const app = express();
 app.use(cors())
@@ -17,6 +18,7 @@ app.use(express.json());  // Menghapus bodyParser.json() karena duplikasi
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/materi', materiRoutes);
+app.use('/api/users', usersRoutes);
 // Inisialisasi koneksi pool Oracle
 async function initOracleClient() {
   try {

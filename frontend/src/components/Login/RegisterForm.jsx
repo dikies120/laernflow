@@ -39,7 +39,10 @@ const RegisterForm = () => {
       const data = await response.json()
 
       if (response.ok) {
-        console.log('Registration successful:', data)
+        // Simpan user ke localStorage setelah register sukses (jika backend mengirim data user)
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
         alert('Registration successful! Please login with your new account.')
         navigate('/') 
       } else {

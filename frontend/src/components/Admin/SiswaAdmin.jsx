@@ -1,18 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { FaChartBar, FaBook, FaUserGraduate } from "react-icons/fa";
-
-const dummySiswa = [
-  { id: 1, nama: "Budi", email: "budi@email.com", skor: 85 },
-  { id: 2, nama: "Siti", email: "siti@email.com", skor: 92 },
-  { id: 3, nama: "Andi", email: "andi@email.com", skor: 78 },
-];
 
 const SiswaAdmin = () => {
   const navigate = useNavigate();
+  const [siswaBaru, setSiswaBaru] = useState([]);
+
   const handleNavigation = (path) => {
     navigate(path);
   };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await axios.get("/api/users/siswa");
+        if (res.data.success) {
+          const users = res.data.users;
+          setSiswaBaru(users.slice(0, 5)); // ambil 5 pengguna terbaru
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data:", err);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const handleLogout = () => {
     alert("You have been logged out!");
@@ -68,11 +81,11 @@ const SiswaAdmin = () => {
               </tr>
             </thead>
             <tbody>
-              {dummySiswa.map((s) => (
-                <tr key={s.id}>
-                  <td className="py-2">{s.nama}</td>
-                  <td className="py-2">{s.email}</td>
-                  <td className="py-2 font-semibold">{s.skor}</td>
+              {siswaBaru.map((siswa) => (
+                <tr key={siswa.id}>
+                  <td className="py-2">{siswa.nama}</td>
+                  <td className="py-2">{siswa.email}</td>
+                  <td className="py-2 font-semibold text-center">-</td> {/* skor default */}
                 </tr>
               ))}
             </tbody>
