@@ -11,6 +11,8 @@ const colorPalettes = [
   "from-rose-500 via-fuchsia-500 to-indigo-500",
 ];
 
+//testing menambahkan materi 
+
 const Materi = () => {
   const [allMateriList, setAllMateriList] = useState([]);
   const [filteredMateriList, setFilteredMateriList] = useState([]);
