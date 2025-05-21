@@ -1,71 +1,77 @@
 const express = require('express');
 const router = express.Router();
-const { getConnection } = require('../db');
+const { getConnection } = require('../db'); // Sesuaikan dengan path file koneksi DB Anda
 const bcrypt = require('bcrypt');
 
 // Register Route
 router.post('/register', async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, kelas } = req.body;
   let conn = null;
 
-  // Validasi input
-  if (!username || !email || !password) {
-    return res.status(400).json({ 
+  if (!username || !email || !password || !kelas) {
+    return res.status(400).json({
       success: false,
-      message: 'Username, email, and password are required' 
+      message: 'Username, email, password, and kelas are required'
+    });
+  }
+  if (password.length < 6) {
+      return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters long'
+      });
+  }
+   if (kelas === '') { // Validasi tambahan jika kelas masih bernilai string kosong dari dropdown
+    return res.status(400).json({
+      success: false,
+      message: 'Kelas wajib dipilih'
     });
   }
 
-  try {
-    // Mendapatkan koneksi database
-    conn = await getConnection();
 
-    // Cek apakah email sudah terdaftar
+  try {
+    conn = await getConnection();
     const checkResult = await conn.execute(
-      `SELECT * FROM users WHERE email = :email`,
+      `SELECT EMAIL FROM users WHERE EMAIL = :email`, // Hanya pilih EMAIL untuk efisiensi
       { email }
     );
 
     if (checkResult.rows.length > 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Email already registered' 
+        message: 'Email already registered'
       });
     }
 
-    // Hash password untuk keamanan
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Ambil ID otomatis dari sequence
-    const result = await conn.execute(
+    // Ambil ID otomatis dari sequence (Pastikan sequence 'users_seq' ada di DB Oracle Anda)
+    // CREATE SEQUENCE users_seq START WITH 1 INCREMENT BY 1;
+    const resultSeq = await conn.execute(
       `SELECT users_seq.NEXTVAL AS user_id FROM dual`
     );
+    const userId = resultSeq.rows[0].USER_ID;
 
-    const userId = result.rows[0].USER_ID;
-
-    // Masukkan pengguna baru ke tabel users
     await conn.execute(
-      `INSERT INTO users (USER_ID, USERNAME, EMAIL, PASSWORD, CREATED_DATE)
-      VALUES (:userId, :username, :email, :hashedPassword, SYSDATE)`,
-      { userId, username, email, hashedPassword },
+      `INSERT INTO users (USER_ID, USERNAME, EMAIL, PASSWORD, KELAS, CREATED_DATE)
+       VALUES (:userId, :username, :email, :hashedPassword, :kelas, SYSDATE)`,
+      { userId, username, email, hashedPassword, kelas },
       { autoCommit: true }
     );
 
-    res.status(201).json({ 
+    res.status(201).json({
       success: true,
-      message: 'User registered successfully' 
+      message: 'User registered successfully'
     });
 
   } catch (err) {
     console.error('Registration error:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Error registering user',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
     });
   } finally {
-    // Tutup koneksi database
     if (conn) {
       try {
         await conn.close();
@@ -81,63 +87,65 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   let conn = null;
 
-  // Validasi input
   if (!email || !password) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: 'Email and password are required' 
+      message: 'Email and password are required'
     });
   }
 
   try {
-    // Mendapatkan koneksi database
     conn = await getConnection();
-
-    // Cari user berdasarkan email
+    // Ambil semua data user termasuk KELAS
     const result = await conn.execute(
-      `SELECT * FROM users WHERE email = :email`,
+      `SELECT USER_ID, USERNAME, EMAIL, PASSWORD, KELAS, CREATED_DATE FROM users WHERE EMAIL = :email`,
       { email }
     );
 
-    // Jika user tidak ditemukan
     if (result.rows.length === 0) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Invalid email or password' 
+        message: 'Invalid email or password'
       });
     }
 
-    const user = result.rows[0];
-    
-    // Verifikasi password
+    const user = result.rows[0]; // Oracle mengembalikan nama kolom uppercase by default
+
+    console.log('Backend /login: User data from DB (before sending to frontend):', user);
+
     const passwordMatch = await bcrypt.compare(password, user.PASSWORD);
-    
+
     if (!passwordMatch) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Invalid email or password' 
+        message: 'Invalid email or password'
       });
     }
 
-    // Hapus password dari objek user sebelum mengirim respons
-    delete user.PASSWORD;
+    // Buat objek user baru tanpa field PASSWORD untuk dikirim ke frontend
+    const userToSend = {
+        USER_ID: user.USER_ID,
+        USERNAME: user.USERNAME,
+        EMAIL: user.EMAIL,
+        KELAS: user.KELAS, // Pastikan KELAS ada di sini
+        CREATED_DATE: user.CREATED_DATE
+    };
 
-    // Login berhasil
-    res.status(200).json({ 
+
+    res.status(200).json({
       success: true,
-      message: 'Login successful', 
-      user 
+      message: 'Login successful',
+      user: userToSend
     });
 
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Login failed',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
     });
   } finally {
-    // Tutup koneksi database
     if (conn) {
       try {
         await conn.close();
@@ -148,19 +156,19 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Endpoint untuk mengambil semua user dari tabel users
+// Endpoint untuk mengambil semua user (jika masih digunakan)
 router.get('/siswa', async (req, res) => {
   let conn = null;
   try {
     conn = await getConnection();
     const result = await conn.execute(
-      `SELECT USER_ID, USERNAME, EMAIL, CREATED_DATE FROM users ORDER BY CREATED_DATE DESC`
+      `SELECT USER_ID, USERNAME, EMAIL, KELAS, CREATED_DATE FROM users ORDER BY CREATED_DATE DESC`
     );
-    // Map hasil ke array of object
     const users = result.rows.map(row => ({
       id: row.USER_ID,
       nama: row.USERNAME,
       email: row.EMAIL,
+      kelas: row.KELAS, // Pastikan ini KELAS (uppercase) jika kolom di DB juga uppercase
       tanggal: row.CREATED_DATE
     }));
     res.json({ success: true, users });
@@ -169,7 +177,7 @@ router.get('/siswa', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch users' });
   } finally {
     if (conn) {
-      try { await conn.close(); } catch (err) {}
+      try { await conn.close(); } catch (err) {console.error('Error closing connection:', err);}
     }
   }
 });

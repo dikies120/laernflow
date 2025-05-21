@@ -1,49 +1,50 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  const navigate = useNavigate()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setErrorMessage('')
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
 
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json' 
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, password })
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
+
+      console.log('Frontend LoginForm: Login API response (data.user):', data.user);
 
       if (response.ok) {
-        // Simpan user ke localStorage/sessionStorage sesuai rememberMe
         if (rememberMe) {
-          localStorage.setItem('user', JSON.stringify(data.user))
+          localStorage.setItem('user', JSON.stringify(data.user));
         } else {
-          sessionStorage.setItem('user', JSON.stringify(data.user))
+          sessionStorage.setItem('user', JSON.stringify(data.user));
         }
-        navigate('/dashboard')
+        navigate('/dashboard');
       } else {
-        setErrorMessage(data.message || 'Login failed. Please check your credentials.')
+        setErrorMessage(data.message || 'Login failed. Please check your credentials.');
       }
     } catch (error) {
-      console.error('Login error:', error)
-      setErrorMessage('Network error. Please check your connection and try again.')
+      console.error('Login error:', error);
+      setErrorMessage('Network error. Please check your connection and try again.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -92,6 +93,7 @@ const LoginForm = () => {
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-gray-600"
               onClick={() => setShowPassword(!showPassword)}
+              disabled={isLoading}
             >
               {showPassword ? 'Hide' : 'Show'}
             </button>
@@ -142,7 +144,7 @@ const LoginForm = () => {
         </a>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LoginForm
+export default LoginForm;
