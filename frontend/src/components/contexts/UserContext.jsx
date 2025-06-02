@@ -16,24 +16,7 @@ export const UserProvider = ({ children }) => {
     }
   });
 
-  // Efek ini bisa disederhanakan jika logika rememberMe hanya saat login
-  // Jika user object (termasuk rememberMe) tidak disimpan, maka efek ini tidak terlalu berguna
-  // Asumsikan 'user' object dari storage sudah benar
-  // useEffect(() => {
-  //   if (user) {
-  //     // Logika rememberMe sebaiknya ditangani saat login,
-  //     // user object yang disimpan di storage sudah final.
-  //     // Jika ada flag rememberMe di user object, bisa digunakan di sini.
-  //     // Namun, UserProvider ini lebih untuk menyediakan state user global
-  //     // daripada mengatur localStorage vs sessionStorage secara dinamis setelah load awal.
-  //   } else {
-  //     // Jika user logout atau tidak ada
-  //     localStorage.removeItem('user');
-  //     sessionStorage.removeItem('user');
-  //   }
-  // }, [user]);
-
-  // Fungsi untuk login dan menyimpan user ke state dan storage
+ 
   const loginUser = (userData, rememberMe) => {
     setUser(userData);
     if (rememberMe) {

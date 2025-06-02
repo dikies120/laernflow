@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/admin');
 const materiRoutes = require('./routes/materi');
 const usersRoutes = require('./routes/users');
 const path = require('path'); // Tambahkan ini untuk manipulasi path
+const quizRoutes = require('./routes/quiz');
 
 const app = express();
 app.use(cors());
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/materi', materiRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/quiz', quizRoutes);
 
 // Inisialisasi koneksi pool Oracle
 async function initOracleClient() {
