@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
@@ -20,13 +21,6 @@ app.use(express.urlencoded({ extended: true }));
 const rootProjectDir = path.join(__dirname, '..'); 
 const staticUploadsPath = path.join(rootProjectDir, 'uploads');
 
-console.log('----------------------------------------------------------------------');
-console.log('[SERVER] __dirname (lokasi app.js):', __dirname);
-console.log('[SERVER] Root Project Directory (diasumsikan):', rootProjectDir);
-console.log(`[SERVER] Mencoba menyajikan file statis untuk rute '/uploads' dari direktori absolut: ${staticUploadsPath}`);
-console.log('[SERVER] Pastikan path di atas adalah lokasi folder "uploads" Anda yang benar (di root proyek, bukan di dalam folder backend).');
-console.log('----------------------------------------------------------------------');
-
 app.use('/uploads', express.static(staticUploadsPath));
 
 app.use('/api/auth', authRoutes);
@@ -38,11 +32,11 @@ app.use('/api/quiz', quizRoutes);
 async function initPostgresClient() {
   try {
     initPool({
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 5432,
-      database: process.env.DB_DATABASE || 'learnflow_db',
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_DATABASE,
     });
     console.log('PostgreSQL database pool initialized');
   } catch (err) {
