@@ -1,19 +1,15 @@
 const oracledb = require('oracledb');
 
-// Konfigurasi database Oracle
 const dbConfig = {
-  user: process.env.DB_USER || 'C##LEARNFLOW',
-  password: process.env.DB_PASSWORD || 'learnflow',
-  connectString: process.env.DB_CONNECT_STRING || 'DESKTOP-5E9D24S/scl'
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  connectString: process.env.DB_CONNECT_STRING
 };
 
-// Fungsi untuk mendapatkan koneksi database
 async function getConnection() {
   try {
-    // Mengatur autoCommit ke false secara default
     const connection = await oracledb.getConnection(dbConfig);
     
-    // Mengatur format output menjadi OBJECT untuk kemudahan akses properti
     connection.execute = async function(query, binds = [], options = {}) {
       const defaultOptions = { 
         outFormat: oracledb.OUT_FORMAT_OBJECT,

@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getConnection } = require('../db'); // Sesuaikan dengan path file koneksi DB Anda
+const { getConnection } = require('../db'); 
 const bcrypt = require('bcrypt');
 
-// Register Route
 router.post('/register', async (req, res) => {
   const { username, email, password, kelas } = req.body;
   let conn = null;
@@ -20,7 +19,7 @@ router.post('/register', async (req, res) => {
           message: 'Password must be at least 6 characters long'
       });
   }
-   if (kelas === '') { // Validasi tambahan jika kelas masih bernilai string kosong dari dropdown
+   if (kelas === '') {
     return res.status(400).json({
       success: false,
       message: 'Kelas wajib dipilih'
@@ -31,7 +30,7 @@ router.post('/register', async (req, res) => {
   try {
     conn = await getConnection();
     const checkResult = await conn.execute(
-      `SELECT EMAIL FROM users WHERE EMAIL = :email`, // Hanya pilih EMAIL untuk efisiensi
+      `SELECT EMAIL FROM users WHERE EMAIL = :email`, 
       { email }
     );
 
@@ -45,8 +44,6 @@ router.post('/register', async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Ambil ID otomatis dari sequence (Pastikan sequence 'users_seq' ada di DB Oracle Anda)
-    // CREATE SEQUENCE users_seq START WITH 1 INCREMENT BY 1;
     const resultSeq = await conn.execute(
       `SELECT users_seq.NEXTVAL AS user_id FROM dual`
     );
@@ -82,7 +79,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login Route
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   let conn = null;
@@ -96,7 +92,6 @@ router.post('/login', async (req, res) => {
 
   try {
     conn = await getConnection();
-    // Ambil semua data user termasuk KELAS
     const result = await conn.execute(
       `SELECT USER_ID, USERNAME, EMAIL, PASSWORD, KELAS, CREATED_DATE FROM users WHERE EMAIL = :email`,
       { email }
@@ -109,7 +104,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const user = result.rows[0]; // Oracle mengembalikan nama kolom uppercase by default
+    const user = result.rows[0];
 
     console.log('Backend /login: User data from DB (before sending to frontend):', user);
 
@@ -122,12 +117,11 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Buat objek user baru tanpa field PASSWORD untuk dikirim ke frontend
     const userToSend = {
         USER_ID: user.USER_ID,
         USERNAME: user.USERNAME,
         EMAIL: user.EMAIL,
-        KELAS: user.KELAS, // Pastikan KELAS ada di sini
+        KELAS: user.KELAS,
         CREATED_DATE: user.CREATED_DATE
     };
 
@@ -156,7 +150,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Endpoint untuk mengambil semua user (jika masih digunakan)
 router.get('/siswa', async (req, res) => {
   let conn = null;
   try {
@@ -168,7 +161,7 @@ router.get('/siswa', async (req, res) => {
       id: row.USER_ID,
       nama: row.USERNAME,
       email: row.EMAIL,
-      kelas: row.KELAS, // Pastikan ini KELAS (uppercase) jika kolom di DB juga uppercase
+      kelas: row.KELAS,
       tanggal: row.CREATED_DATE
     }));
     res.json({ success: true, users });

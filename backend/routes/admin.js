@@ -3,7 +3,6 @@ const router = express.Router();
 const { getConnection } = require('../db');
 const bcrypt = require('bcrypt');
 
-// Admin Register Route
 router.post('/register-admin', async (req, res) => {
   const { email, password } = req.body;
   let conn = null;
@@ -18,7 +17,6 @@ router.post('/register-admin', async (req, res) => {
   try {
     conn = await getConnection();
 
-    // Cek apakah email sudah terdaftar
     const checkResult = await conn.execute(
       `SELECT * FROM admin WHERE email = :email`,
       { email }
@@ -30,19 +28,14 @@ router.post('/register-admin', async (req, res) => {
       });
     }
 
-    // Untuk produksi, hash password:
-    // const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Ambil ID otomatis (misal dari sequence admin_seq)
     const idResult = await conn.execute(
       `SELECT admin_seq.NEXTVAL AS id FROM dual`
     );
     const id = idResult.rows[0].ID;
 
-    // Simpan admin baru
     await conn.execute(
       `INSERT INTO admin (id, email, password) VALUES (:id, :email, :password)`,
-      { id, email, password }, // Ganti password dengan hashedPassword jika pakai hash
+      { id, email, password }, 
       { autoCommit: true }
     );
 
@@ -64,7 +57,6 @@ router.post('/register-admin', async (req, res) => {
   }
 });
 
-// Admin Login Route
 router.post('/login-admin', async (req, res) => {
   const { email, password } = req.body;
   let conn = null;
@@ -91,10 +83,6 @@ router.post('/login-admin', async (req, res) => {
     }
 
     const admin = result.rows[0];
-
-    // Jika password di-hash:
-    // const passwordMatch = await bcrypt.compare(password, admin.PASSWORD);
-    // if (!passwordMatch) { ... }
 
     if (admin.PASSWORD !== password) {
       return res.status(401).json({

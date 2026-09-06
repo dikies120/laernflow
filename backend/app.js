@@ -1,13 +1,13 @@
 const express = require('express');
-const bodyParser = require('body-parser'); // Anda bisa hapus ini jika sudah menggunakan express.json() dan express.urlencoded()
+const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
 const oracledb = require('oracledb');
-const { closePoolAndExit } = require('./db'); // Pastikan path ini benar
+const { closePoolAndExit } = require('./db'); 
 const cors = require('cors');
 const adminRoutes = require('./routes/admin');
 const materiRoutes = require('./routes/materi');
 const usersRoutes = require('./routes/users');
-const path = require('path'); // Tambahkan ini untuk manipulasi path
+const path = require('path');
 const quizRoutes = require('./routes/quiz');
 
 const app = express();
@@ -15,30 +15,34 @@ app.use(cors());
 
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-// app.use(bodyParser.json()); // Sudah digantikan oleh express.json()
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Tambahkan ini untuk parsing form data non-file (meskipun multer akan handle file)
+app.use(express.urlencoded({ extended: true }));
 
-// Menyajikan file statis dari direktori 'uploads'
-// Ini memungkinkan akses ke file via URL seperti http://localhost:5000/uploads/dokumen_materi/namafile.pdf
-// Pastikan direktori 'uploads/dokumen_materi' ada di root folder backend Anda, atau sesuaikan path.
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const rootProjectDir = path.join(__dirname, '..'); 
+const staticUploadsPath = path.join(rootProjectDir, 'uploads');
 
-// Inisialisasi Rute API Anda
+console.log('----------------------------------------------------------------------');
+console.log('[SERVER] __dirname (lokasi app.js):', __dirname);
+console.log('[SERVER] Root Project Directory (diasumsikan):', rootProjectDir);
+console.log(`[SERVER] Mencoba menyajikan file statis untuk rute '/uploads' dari direktori absolut: ${staticUploadsPath}`);
+console.log('[SERVER] Pastikan path di atas adalah lokasi folder "uploads" Anda yang benar (di root proyek, bukan di dalam folder backend).');
+console.log('----------------------------------------------------------------------');
+
+app.use('/uploads', express.static(staticUploadsPath));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/materi', materiRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/quiz', quizRoutes);
 
-// Inisialisasi koneksi pool Oracle
+
 async function initOracleClient() {
   try {
     await oracledb.createPool({
       user: process.env.DB_USER || 'C##LEARNFLOW',
       password: process.env.DB_PASSWORD || 'learnflow',
-      connectString: process.env.DB_CONNECT_STRING || 'DESKTOP-5E9D24S/scl', // Pastikan ini benar untuk lingkungan Anda
+      connectString: process.env.DB_CONNECT_STRING || 'DESKTOP-5E9D24S/scl',
       poolMin: 2,
       poolMax: 10,
       poolIncrement: 1
@@ -50,12 +54,10 @@ async function initOracleClient() {
   }
 }
 
-// Root endpoint
 app.get('/', (req, res) => {
   res.send('Oracle + Express Auth API Ready');
 });
 
-// Start server
 async function startServer() {
   try {
     await initOracleClient();
@@ -68,9 +70,7 @@ async function startServer() {
   }
 }
 
-// Penanganan shutdown dengan baik
 process.on('SIGTERM', closePoolAndExit);
 process.on('SIGINT', closePoolAndExit);
 
-// Mulai server
 startServer();

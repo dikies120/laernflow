@@ -1,4 +1,4 @@
-// src/components/QuizTaker.jsx
+
 import React, { useEffect, useState, useCallback } from "react";
 import {
   FaArrowLeft, FaArrowRight, FaTimesCircle, FaRegStopCircle, FaCheck, FaRedo,
@@ -10,9 +10,9 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
-  // 'score' utama masih menyimpan jumlah jawaban benar, tapi kita akan gunakan 'resultForDisplay' untuk UI akhir.
+  
   const [score, setScore] = useState(0); 
-  const [resultForDisplay, setResultForDisplay] = useState({ score: 0, totalQuestions: 0, percentage: 0 }); // State baru untuk tampilan hasil
+  const [resultForDisplay, setResultForDisplay] = useState({ score: 0, totalQuestions: 0, percentage: 0 }); 
 
   const [error, setError] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -25,14 +25,14 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
   const fetchQuizData = useCallback(async () => {
     setLoading(true); setError(null); setAnswers({}); setCurrentQuestionIndex(0);
     setCurrentSelection(null); setSubmitted(false); setScore(0); setQuizList([]);
-    setResultForDisplay({ score: 0, totalQuestions: 0, percentage: 0 }); // Reset hasil tampilan juga
+    setResultForDisplay({ score: 0, totalQuestions: 0, percentage: 0 }); 
     setStartTime(Date.now());
 
     if (!materiId) {
         setError("ID Materi tidak valid untuk memuat kuis."); setLoading(false); return;
     }
     try {
-      // ... (fetchQuizData logic seperti sebelumnya) ...
+      
       const response = await fetch(`${API_BASE_URL}/api/quiz/materi/${materiId}`);
       if (!response.ok) {
         const errorText = await response.text();
@@ -74,7 +74,7 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
       const nextIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(nextIndex);
       setCurrentSelection(answers[quizList[nextIndex]?.id] || null);
-    } else { handleSubmitQuiz(true); } // Auto submit on last question
+    } else { handleSubmitQuiz(true); } 
   };
 
   const handleSkipQuestion = () => saveAndGoNext(true);
@@ -88,7 +88,7 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
   };
 
   const saveScoreToDatabase = async (finalAnswers, correctCount) => {
-    // ... (fungsi saveScoreToDatabase seperti sebelumnya) ...
+    
     if (!userId) {
       console.warn("User ID tidak tersedia, skor tidak dapat disimpan");
       return { success: false, message: "User ID tidak tersedia." };
@@ -123,20 +123,20 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
     let correctCount = 0;
     quizList.forEach(question => { if (finalAnswers[question.id] === question.jawaban) { correctCount++; } });
     
-    // Set nilai untuk tampilan dan state utama
-    const currentQuizListLength = quizList.length; // Ambil panjang quizList saat ini
-    setScore(correctCount); // Set state 'score' utama
-    setResultForDisplay({ // Set state untuk tampilan hasil
+    
+    const currentQuizListLength = quizList.length; 
+    setScore(correctCount); 
+    setResultForDisplay({ 
         score: correctCount,
         totalQuestions: currentQuizListLength,
         percentage: currentQuizListLength > 0 ? Math.round((correctCount / currentQuizListLength) * 100) : 0,
     });
-    setSubmitted(true); // Tandai kuis sudah disubmit
+    setSubmitted(true); 
 
-    const saveResult = await saveScoreToDatabase(finalAnswers, correctCount); // Simpan skor
+    const saveResult = await saveScoreToDatabase(finalAnswers, correctCount); 
 
     if (typeof onQuizComplete === 'function') {
-        onQuizComplete({ // Kirim hasil ke parent
+        onQuizComplete({ 
             submitted: true, 
             score: correctCount, 
             totalQuestions: currentQuizListLength,
@@ -147,9 +147,9 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
     }
   };
 
-  const handleRetryQuiz = () => { fetchQuizData(); }; // fetchQuizData sudah mereset semua state yang perlu
+  const handleRetryQuiz = () => { fetchQuizData(); }; 
 
-  // Fungsi getScoreColor sekarang menggunakan resultForDisplay
+  
   const getScoreColor = () => {
     const percentage = resultForDisplay.percentage;
     if (percentage >= 80) return "text-green-600"; 
@@ -159,13 +159,13 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
 
   const getAnsweredCount = () => Object.keys(answers).length;
 
-  // ... (blok loading dan error seperti sebelumnya) ...
+  
   if (loading) return ( <div className="flex items-center justify-center min-h-screen bg-gray-50"><div className="text-center"><FaHourglassHalf className="text-4xl text-blue-500 animate-spin mx-auto mb-4" /><p className="text-lg text-gray-600">Memuat kuis...</p></div></div> );
   if (error) return ( <div className="flex items-center justify-center min-h-screen bg-gray-50"><div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full mx-4"><div className="text-center"><FaTimesCircle className="text-5xl text-red-500 mx-auto mb-4" /><h2 className="text-xl font-bold text-gray-800 mb-4">Error</h2><p className="text-gray-600 mb-6">{error}</p><div className="flex flex-col sm:flex-row gap-3"><button onClick={fetchQuizData} className="flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"><FaRedo className="mr-2" /> Coba Lagi</button><button onClick={onQuizClose} className="flex items-center justify-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"><FaArrowLeft className="mr-2" /> Kembali</button></div></div></div></div> );
 
 
   if (submitted) {
-    // Tambahkan log di sini untuk memeriksa nilai resultForDisplay saat render
+    
     console.log("Rendering submitted view. Result for display:", resultForDisplay); 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
@@ -178,11 +178,11 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
 
             <div className="p-8">
               <div className="text-center mb-8">
-                {/* Gunakan resultForDisplay untuk persentase */}
+                {}
                 <div className={`text-6xl font-bold mb-2 ${getScoreColor()}`}>
                   {resultForDisplay.percentage}% 
                 </div>
-                {/* Gunakan resultForDisplay untuk skor mentah */}
+                {}
                 <p className="text-gray-600 text-lg">
                   Skor Anda: {resultForDisplay.score} dari {resultForDisplay.totalQuestions} soal
                 </p>
@@ -197,7 +197,7 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
               <div className="bg-gray-50 rounded-lg p-6 mb-6">
                 <h3 className="font-semibold text-gray-800 mb-4">Detail Jawaban:</h3>
                 <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {quizList.map((question, index) => { // quizList masih valid di sini
+                  {quizList.map((question, index) => { 
                     const userAnswer = answers[question.id];
                     const isCorrect = userAnswer === question.jawaban;
                     const wasAnswered = userAnswer !== undefined;
@@ -242,7 +242,7 @@ const QuizTaker = ({ materiId, onQuizClose, userId, onQuizComplete }) => {
     );
   }
 
-  // ... (sisa kode render untuk pertanyaan kuis seperti sebelumnya) ...
+  
   const currentQuestion = quizList[currentQuestionIndex];
   const progress = quizList.length > 0 ? ((currentQuestionIndex + 1) / quizList.length) * 100 : 0;
 

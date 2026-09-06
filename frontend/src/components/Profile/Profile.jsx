@@ -85,7 +85,7 @@ const Profile = () => {
       } finally { setLoadingProfile(false); }
     };
     if (user.ID_USER) { fetchUserProfile(); } else { setLoadingProfile(false); }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [user.ID_USER, API_BASE_URL]);
 
   const handleNavigation = (path) => navigate(path);

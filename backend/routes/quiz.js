@@ -1,10 +1,8 @@
-// backend/routes/quiz.js
 const express = require('express');
 const router = express.Router();
 const { getConnection } = require('../db');
 const oracledb = require('oracledb');
 
-// Helper function to read a LOB (CLOB/NCLOB) to a string
 async function lobToString(lobInput, columnName = "Unknown") {
   return new Promise((resolve, reject) => {
     if (!lobInput) { return resolve(''); }
@@ -24,7 +22,6 @@ async function lobToString(lobInput, columnName = "Unknown") {
   });
 }
 
-// GET semua quiz untuk satu materi
 router.get('/materi/:materiId', async (req, res) => {
   let conn = null; const { materiId } = req.params;
   try {
@@ -68,8 +65,6 @@ router.get('/user/:userId/materi/:materiId/last-attempt-status', async (req, res
     conn = await getConnection();
     console.log(`[API quiz.js] Fetching last quiz attempt status for user: ${numericUserId}, materi: ${numericMateriId}`);
 
-    // Query untuk mengambil percobaan kuis terakhir berdasarkan COMPLETED_AT
-    // Anda bisa menyesuaikan logika ini, misal mengambil skor tertinggi jika diinginkan.
     const result = await conn.execute(
       `SELECT * FROM (
          SELECT
@@ -80,7 +75,7 @@ router.get('/user/:userId/materi/:materiId/last-attempt-status', async (req, res
          WHERE USER_ID = :pUserId AND MATERI_ID = :pMateriId
          ORDER BY COMPLETED_AT DESC
        )
-       WHERE ROWNUM = 1`, // Ambil hanya baris pertama (percobaan terakhir)
+       WHERE ROWNUM = 1`,
       { pUserId: numericUserId, pMateriId: numericMateriId }
     );
 
@@ -91,7 +86,7 @@ router.get('/user/:userId/materi/:materiId/last-attempt-status', async (req, res
         lastAttempt: {
           attemptId: lastAttempt.ATTEMPT_ID,
           materiId: lastAttempt.MATERI_ID,
-          score: lastAttempt.SCORE, // Persentase
+          score: lastAttempt.SCORE, 
           totalQuestions: lastAttempt.TOTAL_QUESTIONS,
           correctAnswers: lastAttempt.CORRECT_ANSWERS,
           passed: lastAttempt.PASSED === 1,
@@ -99,7 +94,7 @@ router.get('/user/:userId/materi/:materiId/last-attempt-status', async (req, res
         }
       });
     } else {
-      res.json({ success: true, lastAttempt: null }); // Kuis belum pernah diambil
+      res.json({ success: true, lastAttempt: null });
     }
 
   } catch (err) {
@@ -113,7 +108,6 @@ router.get('/user/:userId/materi/:materiId/last-attempt-status', async (req, res
   }
 });
 
-// POST - Submit quiz score
 router.post('/submit-score', async (req, res) => {
   const { student_id, materi_id, score, total_questions } = req.body;
 
@@ -126,26 +120,15 @@ router.post('/submit-score', async (req, res) => {
     conn = await getConnection();
     console.log(`[quiz.js] API POST /submit-score - student: ${student_id}, materi: ${materi_id}, score: ${score}/${total_questions}`);
 
-    // ASUMSI: Anda memiliki tabel master QUIZZES(QUIZ_PK_ID, MATERI_ID_FK, ...)
-    // dan FK_UQA_QUIZ pada USER_QUIZ_ATTEMPTS.QUIZ_ID merujuk ke QUIZZES.QUIZ_PK_ID
-    // Jika USER_QUIZ_ATTEMPTS.QUIZ_ID seharusnya menyimpan MATERI_ID, maka Anda bisa skip query ini
-    // dan langsung gunakan parseInt(materi_id) untuk binds.quiz_id_val, lalu sesuaikan FK di DB.
     let actualQuizIdToInsert;
     const quizMasterResult = await conn.execute(
-      // Sesuaikan nama tabel (QUIZZES) dan kolom (QUIZ_PK_ID, MATERI_ID_FK) dengan skema Anda
       `SELECT QUIZ_PK_ID FROM QUIZZES WHERE MATERI_ID_FK = :materi_id_val`,
       { materi_id_val: parseInt(materi_id) }
     );
 
     if (!quizMasterResult.rows || quizMasterResult.rows.length === 0) {
-      // Fallback: Jika tidak ada master quiz, mungkin Anda ingin menggunakan materi_id sebagai quiz_id
-      // Ini BUKAN solusi ideal jika FK_UQA_QUIZ merujuk ke tabel QUIZZES yang berbeda.
-      // Ini akan menyebabkan error ORA-02291 jika tabel QUIZZES tidak memiliki record dengan ID = materi_id
-      // Atau, jika FK_UQA_QUIZ seharusnya ke MATERI.ID, maka ini benar, tapi FK_UQA_QUIZ salah nama.
       console.warn(`[quiz.js] Tidak ditemukan master quiz untuk materi ID: ${materi_id}. Menggunakan materi_id sebagai quiz_id (mungkin menyebabkan error FK).`);
       actualQuizIdToInsert = parseInt(materi_id); 
-      // Jika Anda TIDAK memiliki tabel QUIZZES dan FK_UQA_QUIZ merujuk ke MATERI.ID, baris di atas sudah benar
-      // dan query untuk quizMasterResult bisa di-skip/dikomentari.
     } else {
        actualQuizIdToInsert = quizMasterResult.rows[0].QUIZ_PK_ID;
     }
@@ -168,8 +151,8 @@ router.post('/submit-score', async (req, res) => {
                  VALUES (:attempt_id, :user_id, :quiz_id_val, :materi_id_val, :score_percent, :total_questions_val, :correct_answers_val, :passed_val, SYSDATE)`;
     const binds = {
         attempt_id: newAttemptId, user_id: parseInt(student_id),
-        quiz_id_val: actualQuizIdToInsert, // Menggunakan ID kuis yang sebenarnya
-        materi_id_val: parseInt(materi_id), // Tetap simpan materi_id jika kolomnya ada
+        quiz_id_val: actualQuizIdToInsert, 
+        materi_id_val: parseInt(materi_id),
         score_percent: percentage, total_questions_val: total_q,
         correct_answers_val: correct_answers, passed_val: passed
     };
@@ -186,11 +169,10 @@ router.post('/submit-score', async (req, res) => {
   }
 });
 
-// GET - Quiz results for specific student
 router.get('/results/student/:studentId', async (req, res) => {
   let conn = null;
   const { studentId } = req.params;
-  const { materi_id } = req.query; // Filter by materi_id jika ada
+  const { materi_id } = req.query;
   try {
     conn = await getConnection();
     let sql = `SELECT
@@ -206,8 +188,7 @@ router.get('/results/student/:studentId', async (req, res) => {
       sql += ` AND uqa.MATERI_ID = :materi_id_bv`;
       binds.materi_id_bv = parseInt(materi_id);
     }
-    // **PENTING: Ubah urutan di sini jika sebelumnya DESC**
-    sql += ` ORDER BY uqa.COMPLETED_AT ASC`; // Menampilkan percobaan terlama dulu
+    sql += ` ORDER BY uqa.COMPLETED_AT ASC`; 
 
     const result = await conn.execute(sql, binds);
     const results = result.rows.map(row => ({
@@ -220,7 +201,7 @@ router.get('/results/student/:studentId', async (req, res) => {
       passed: row.PASSED === 1,
       completed_at: row.COMPLETED_AT
     }));
-    res.json(results); // Kirim sebagai array langsung
+    res.json(results);
   } catch (err) {
     console.error(`[quiz.js] API GET /results/student/:studentId - Error:`, err.message, err.stack);
     res.status(500).json({ success: false, message: 'Gagal mengambil hasil quiz untuk student.', error: err.message });
@@ -229,9 +210,6 @@ router.get('/results/student/:studentId', async (req, res) => {
   }
 });
 
-// ... (endpoint /results/admin dan /add dan /by-materi seperti sebelumnya, pastikan mereka juga berfungsi dengan baik)
-
-// GET - Quiz results for admin
 router.get('/results/admin', async (req, res) => {
   let conn = null;
   const { materi_id, student_id, limit = 50 } = req.query;
@@ -267,7 +245,6 @@ router.get('/results/admin', async (req, res) => {
   }
 });
 
-// Tambah quiz baru
 router.post('/add', async (req, res) => {
   const { materi_id, soal, a, b, c, d, jawaban } = req.body;
   if (!materi_id || !soal || !a || !b || !c || !d || !jawaban) {
@@ -300,7 +277,6 @@ router.post('/add', async (req, res) => {
   }
 });
 
-// Endpoint /by-materi/
 router.get('/by-materi/:materi_id_param', async (req, res) => {
   let conn = null; const { materi_id_param } = req.params;
   try {

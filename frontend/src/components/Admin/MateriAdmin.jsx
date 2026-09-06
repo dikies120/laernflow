@@ -1,10 +1,10 @@
-// frontend/src/components/Admin/MateriAdmin.jsx
-import React, { useEffect, useState, useCallback } from "react"; // Tambahkan useCallback
+
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaChartLine, FaBookOpen, FaUsers, FaPlus, FaFileUpload, FaLink, FaAlignLeft,
   FaTrash, FaEdit, FaPlusSquare, FaTimes, FaCrown, FaExpand, FaSignOutAlt,
-  FaSpinner, FaPuzzlePiece, FaEye
+  FaSpinner, FaPuzzlePiece, FaEye, FaListOl 
 } from "react-icons/fa";
 import axios from "axios";
 
@@ -14,10 +14,9 @@ const tipeMateriOptionsList = [
 ];
 const kelasAdminOptionsList = [
   { value: '', label: 'Pilih Kelas*', disabled: true },
-  { value: '10-IPA-1', label: '10 IPA 1' }, { value: '10-IPA-2', label: '10 IPA 2' },
-  { value: '10-IPS-1', label: '10 IPS 1' }, { value: '11-IPA-1', label: '11 IPA 1' },
-  { value: '11-IPS-1', label: '11 IPS 1' }, { value: '12-IPA-1', label: '12 IPA 1' },
-  { value: '12-IPS-1', label: '12 IPS 1' },
+  { value: '10-IPA', label: '10 IPA' }, 
+  { value: '11-IPA', label: '11 IPA' }, 
+  { value: '12-IPA', label: '12 IPA' },
 ];
 const API_BASE_URL = "http://localhost:5000";
 
@@ -28,9 +27,11 @@ const MateriAdmin = () => {
   const [kelas, setKelas] = useState(kelasAdminOptionsList[0].value);
   const [namaMateri, setNamaMateri] = useState("");
   const [tipeMateri, setTipeMateri] = useState(tipeMateriOptionsList[0].value);
-  const [deskripsi, setDeskripsi] = useState("");
-  const [durasi, setDurasi] = useState("");
-  const [linkGambar, setLinkGambar] = useState("");
+
+
+
+
+  const [orderIndex, setOrderIndex] = useState("");
 
   const [urlVideo, setUrlVideo] = useState("");
   const [isiTeks, setIsiTeks] = useState("");
@@ -39,7 +40,7 @@ const MateriAdmin = () => {
 
   const [materiList, setMateriList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingQuizCounts, setLoadingQuizCounts] = useState(false); // State untuk loading quiz counts
+  const [loadingQuizCounts, setLoadingQuizCounts] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -64,8 +65,6 @@ const MateriAdmin = () => {
       const response = await axios.get(`${API_BASE_URL}/api/quiz/materi/${materiId}`);
       return Array.isArray(response.data) ? response.data.length : 0;
     } catch (err) {
-      // Jika error (misal materi belum ada quiznya sama sekali dan API mengembalikan 404 atau error lain)
-      // anggap saja jumlahnya 0. Atau log error jika diperlukan.
       console.warn(`Could not fetch quiz count for materi ID ${materiId}:`, err.response?.data?.message || err.message);
       return 0;
     }
@@ -75,13 +74,13 @@ const MateriAdmin = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/materi/crud-materi`); //
+      const response = await axios.get(`${API_BASE_URL}/api/materi/crud-materi`);
       let fetchedMateriList = Array.isArray(response.data) ? response.data : [];
-      setMateriList(fetchedMateriList.map(m => ({ ...m, QUIZ_COUNT: undefined }))); // Set initial QUIZ_COUNT to undefined
-      setLoading(false); // Stop main loading
+      setMateriList(fetchedMateriList.map(m => ({ ...m, QUIZ_COUNT: undefined })));
+      setLoading(false); 
 
       if (fetchedMateriList.length > 0) {
-        setLoadingQuizCounts(true); // Start loading for quiz counts
+        setLoadingQuizCounts(true); 
         const updatedMateriList = await Promise.all(
           fetchedMateriList.map(async (materi) => {
             const quizCount = await fetchQuizCountForMateri(materi.ID);
@@ -89,7 +88,7 @@ const MateriAdmin = () => {
           })
         );
         setMateriList(updatedMateriList);
-        setLoadingQuizCounts(false); // Stop loading for quiz counts
+        setLoadingQuizCounts(false);
       }
     } catch (err) {
       console.error("Fetch materi error:", err);
@@ -98,21 +97,24 @@ const MateriAdmin = () => {
       setLoading(false);
       setLoadingQuizCounts(false);
     }
-  }, []); // useCallback dependencies, empty means it's created once
+  }, []); 
 
   useEffect(() => {
     fetchMateriAndQuizCounts();
-  }, [fetchMateriAndQuizCounts]); // fetchMateriAndQuizCounts now a stable dependency
+  }, [fetchMateriAndQuizCounts]); 
 
   const handleFileChange = (e) => { const file = e.target.files[0]; if (file) { setFileDokumen(file); setFileName(file.name); } else { setFileDokumen(null); setFileName(""); }};
   const resetTypeSpecificInputs = () => { setUrlVideo(""); setIsiTeks(""); setFileDokumen(null); setFileName(""); const fileInput = document.getElementById('file-input-dokumen'); if (fileInput) fileInput.value = ""; };
+  
   const resetMateriForm = () => {
     setKelas(kelasAdminOptionsList[0].value);
     setNamaMateri("");
-    setDeskripsi("");
-    setDurasi("");
-    setLinkGambar("");
     setTipeMateri(tipeMateriOptionsList[0].value);
+
+
+
+
+    setOrderIndex("");
     resetTypeSpecificInputs();
   };
   const handleTipeMateriChange = (e) => { setTipeMateri(e.target.value); resetTypeSpecificInputs(); };
@@ -126,9 +128,14 @@ const MateriAdmin = () => {
     formData.append("kelas", kelas);
     formData.append("nama_materi", namaMateri);
     formData.append("tipe_materi", tipeMateri);
-    formData.append("deskripsi", deskripsi);
-    formData.append("durasi", durasi);
-    formData.append("link_gambar", linkGambar);
+    
+    
+    
+    
+    if (orderIndex !== "" && orderIndex !== null && !isNaN(parseInt(orderIndex))) {
+        formData.append("order_index", orderIndex);
+    }
+
 
     if (tipeMateri === "Video") {
         if (!urlVideo) { setError("Link Video Youtube wajib diisi!"); setFormLoading(false); return; }
@@ -142,11 +149,11 @@ const MateriAdmin = () => {
     }
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/materi/crud-materi`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }); //
+      const res = await axios.post(`${API_BASE_URL}/api/materi/crud-materi`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       if (res.data.success) {
           setSuccess("Materi berhasil ditambahkan!");
           resetMateriForm();
-          fetchMateriAndQuizCounts(); // Refresh list and quiz counts
+          fetchMateriAndQuizCounts(); 
           setTimeout(() => setSuccess(""), 4000);
       } else { setError(res.data.message || "Gagal menambah materi"); }
     } catch (err) {
@@ -160,10 +167,10 @@ const MateriAdmin = () => {
     if (!window.confirm("Yakin ingin menghapus materi ini beserta semua quiz terkait? Tindakan ini tidak dapat dibatalkan.")) return;
     setSuccess(""); setError("");
     try {
-      const res = await axios.delete(`${API_BASE_URL}/api/materi/crud-materi/${id}`); //
+      const res = await axios.delete(`${API_BASE_URL}/api/materi/crud-materi/${id}`);
       if (res.data.success) {
           setSuccess("Materi dan quiz terkait berhasil dihapus!");
-          fetchMateriAndQuizCounts(); // Refresh list and quiz counts
+          fetchMateriAndQuizCounts(); 
           setTimeout(() => setSuccess(""), 4000);
       } else { setError(res.data.message || "Gagal menghapus materi"); }
     } catch (err) {
@@ -181,13 +188,11 @@ const MateriAdmin = () => {
     if (!newQuiz.soal || !newQuiz.a || !newQuiz.b || !newQuiz.c || !newQuiz.d || !newQuiz.jawaban) { setQuizError("Semua field quiz wajib diisi."); setQuizFormLoading(false); return; }
     const quizData = { ...newQuiz, materi_id: selectedMateriIdForQuiz };
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/quiz/add`, quizData); //
+      const response = await axios.post(`${API_BASE_URL}/api/quiz/add`, quizData);
       if (response.data.success) {
         setQuizSuccess('Pertanyaan quiz berhasil ditambahkan!');
         setNewQuiz({ soal: '', a: '', b: '', c: '', d: '', jawaban: '' });
-        // Instead of full refresh, we can just update the count for the specific materi
-        // Or rely on the full refresh for simplicity given the N+1 strategy is already in place for initial load
-        fetchMateriAndQuizCounts(); // Refresh daftar materi untuk update QUIZ_COUNT
+        fetchMateriAndQuizCounts(); 
         setTimeout(() => {
             setQuizSuccess("");
         }, 2000);
@@ -203,7 +208,7 @@ const MateriAdmin = () => {
     setSelectedMateriForViewQuiz(materi); setShowViewQuizModal(true);
     setLoadingQuizList(true); setListQuizQuestions([]);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/quiz/materi/${materi.ID}`); //
+      const response = await axios.get(`${API_BASE_URL}/api/quiz/materi/${materi.ID}`);
       setListQuizQuestions(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching quiz questions for material:", error);
@@ -212,18 +217,17 @@ const MateriAdmin = () => {
   };
 
   const handleNavigation = (path) => navigate(path);
-  const handleLogout = () => { alert("Anda telah logout!"); localStorage.removeItem("adminToken"); localStorage.removeItem("adminData"); navigate("/admin/login"); }; //
+  const handleLogout = () => { alert("Anda telah logout!"); localStorage.removeItem("adminToken"); localStorage.removeItem("adminData"); navigate("/admin/login"); }; 
 
   const sidebarItems = [
     { icon: FaChartLine, label: "Dashboard", path: "/admin/dashboardadmin" },
     { icon: FaUsers, label: "Siswa", path: "/admin/siswa" },
     { icon: FaBookOpen, label: "Materi", path: "/admin/materi" },
-  ]; //
+  ]; 
 
   return (
     <div className="flex min-h-screen bg-slate-100 font-sans">
       <aside className={`${sidebarCollapsed ? 'w-[5.5rem]' : 'w-72'} bg-white shadow-xl flex flex-col fixed h-full transition-all duration-300 border-r border-gray-200 z-30`}>
-        {/* Sidebar content unchanged, see original file */}
         <div className="p-5 border-b border-gray-200 h-[73px] flex items-center">
           <div className="flex items-center justify-between w-full">
             {!sidebarCollapsed && ( <div className="flex items-center gap-3"> <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center"> <FaCrown className="text-white text-xl" /> </div> <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">LearnFlow</h1> </div> )}
@@ -250,7 +254,6 @@ const MateriAdmin = () => {
       </aside>
 
       <main className={`flex-1 p-6 sm:p-8 ${sidebarCollapsed ? 'ml-[5.5rem]' : 'ml-72'} transition-all duration-300`}>
-        {/* Main content header unchanged, see original file */}
         <div className="mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Manajemen Materi & Quiz</h2>
           <p className="text-gray-500 text-sm sm:text-base">Tambah, lihat, dan kelola materi pembelajaran serta quiz terkait.</p>
@@ -259,7 +262,7 @@ const MateriAdmin = () => {
         {success && (<div className="mb-6 p-3 bg-green-50 text-green-700 font-semibold rounded-lg border border-green-200 shadow-sm text-sm transition-opacity duration-300 ease-in-out opacity-100">{success}</div>)}
         {error && (<div className="mb-6 p-3 bg-red-50 text-red-700 font-semibold rounded-lg border border-red-200 shadow-sm text-sm transition-opacity duration-300 ease-in-out opacity-100">{error}</div>)}
 
-        {/* Form Tambah Materi unchanged, see original file */}
+        {}
         <form onSubmit={handleAddMateri} className="bg-white rounded-xl shadow-2xl p-6 sm:p-8 max-w-3xl mx-auto space-y-6 mb-12 border border-gray-200">
           <h3 className="text-xl font-semibold text-gray-700 border-b pb-3 mb-6 flex items-center gap-2"> <FaPlusSquare className="text-purple-600 text-2xl"/> Form Tambah Materi Baru </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
@@ -267,20 +270,38 @@ const MateriAdmin = () => {
             <div> <label htmlFor="tipe-materi-admin" className="block mb-1.5 text-sm font-medium text-gray-700">Tipe Materi*</label> <select id="tipe-materi-admin" className="w-full border border-gray-300 px-3 py-2.5 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm" value={tipeMateri} onChange={handleTipeMateriChange} required> {tipeMateriOptionsList.map(opt => (<option key={opt.value} value={opt.value} disabled={opt.value === ""}>{opt.label}</option>))} </select> </div>
           </div>
           <div> <label htmlFor="nama-materi-admin" className="block mb-1.5 text-sm font-medium text-gray-700">Nama Materi*</label> <input id="nama-materi-admin" type="text" className="w-full border border-gray-300 px-3 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm" value={namaMateri} onChange={(e) => setNamaMateri(e.target.value)} placeholder="Contoh: Pengenalan Fotosintesis" required /> </div>
-          <div> <label htmlFor="deskripsi-materi-admin" className="block mb-1.5 text-sm font-medium text-gray-700">Deskripsi Singkat</label> <textarea id="deskripsi-materi-admin" rows="3" className="w-full border border-gray-300 px-3 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} placeholder="Jelaskan secara singkat isi materi ini..."></textarea> </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-            <div> <label htmlFor="durasi-materi-admin" className="block mb-1.5 text-sm font-medium text-gray-700">Estimasi Durasi</label> <input id="durasi-materi-admin" type="text" className="w-full border border-gray-300 px-3 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm" value={durasi} onChange={(e) => setDurasi(e.target.value)} placeholder="Contoh: 45 Menit / 2 Jam" /> </div>
-            <div> <label htmlFor="link-gambar-admin" className="block mb-1.5 text-sm font-medium text-gray-700">URL Gambar Thumbnail</label> <input id="link-gambar-admin" type="url" className="w-full border border-gray-300 px-3 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm" value={linkGambar} onChange={(e) => setLinkGambar(e.target.value)} placeholder="https://example.com/gambar.jpg" /> </div>
+          
+          {}
+          <div> 
+            <label htmlFor="order-index-admin" className="block mb-1.5 text-sm font-medium text-gray-700">
+                <FaListOl className="inline mr-1 mb-0.5"/> Order Index (Opsional)
+            </label> 
+            <input 
+                id="order-index-admin" 
+                type="number" 
+                className="w-full border border-gray-300 px-3 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm" 
+                value={orderIndex} 
+                onChange={(e) => setOrderIndex(e.target.value)} 
+                placeholder="Angka untuk urutan, misal: 1, 2, 3..." 
+            /> 
+            <p className="text-xs text-gray-500 mt-1">Jika dikosongkan, akan diurutkan berdasarkan nama/kelas.</p>
           </div>
 
-          {tipeMateri === "Video" && ( <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400"><label htmlFor="url-video-admin" className="block mb-1.5 text-sm font-medium text-blue-700 flex items-center gap-2"><FaLink /> Link Video Youtube*</label><input id="url-video-admin" type="url" className="w-full border border-gray-300 px-3 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" value={urlVideo} onChange={(e) => setUrlVideo(e.target.value)} placeholder="https://www.youtube.com/watch?v=xxxx" required={tipeMateri === "Video"}/></div> )}
+          {}
+          {}
+          {}
+            {}
+            {}
+          {}
+
+          {tipeMateri === "Video" && ( <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400"><label htmlFor="url-video-admin" className="block mb-1.5 text-sm font-medium text-blue-700 flex items-center gap-2"><FaLink /> Link Video Youtube*</label><input id="url-video-admin" type="url" className="w-full border border-gray-300 px-3 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" value={urlVideo} onChange={(e) => setUrlVideo(e.target.value)} placeholder="Contoh: https://www.youtube.com/watch?v=xxxx" required={tipeMateri === "Video"}/></div> )}
           {tipeMateri === "Teks" && ( <div className="p-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-400"><label htmlFor="isi-teks-admin" className="block mb-1.5 text-sm font-medium text-indigo-700 flex items-center gap-2"><FaAlignLeft /> Isi Teks Materi*</label><textarea id="isi-teks-admin" rows="8" className="w-full border border-gray-300 px-3 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" value={isiTeks} onChange={(e) => setIsiTeks(e.target.value)} placeholder="Ketik atau tempelkan teks materi..." required={tipeMateri === "Teks"}></textarea></div> )}
           {tipeMateri === "Dokumen" && ( <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-400"> <label className="block mb-1.5 text-sm font-medium text-green-700">Upload Dokumen*</label> <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-green-400 transition-colors"> <div className="space-y-1 text-center"> <FaFileUpload className="mx-auto h-10 w-10 text-gray-400"/> <div className="flex text-sm text-gray-600"><label htmlFor="file-input-dokumen" className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500 px-1"><span>Upload file</span><input id="file-input-dokumen" name="dokumenFile" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.txt,.png,.jpg,.jpeg,.mp4" required={tipeMateri === "Dokumen"}/></label><p className="pl-1">atau tarik dan lepas</p></div> <p className="text-xs text-gray-500">PDF, DOC, PPT, Gambar, Video (Maks 100MB)</p> {fileName && <p className="text-sm text-green-700 font-medium mt-2">File terpilih: {fileName}</p>} </div> </div> </div> )}
 
           <button type="submit" disabled={formLoading} className="w-full flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-700 text-white px-4 py-3 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-opacity duration-200 font-semibold text-base shadow-md hover:shadow-lg disabled:opacity-70"> {formLoading ? <FaSpinner className="animate-spin mr-2"/> : <FaPlus className="mr-2"/>} {formLoading ? "Menyimpan..." : "Tambah Materi"} </button>
         </form>
 
-        {/* Modal Tambah Quiz unchanged, see original file */}
+        {}
         {showAddQuizModal && selectedMateriIdForQuiz && (
           <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-40 transition-opacity duration-300">
             <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-gray-200">
@@ -305,7 +326,7 @@ const MateriAdmin = () => {
           </div>
         )}
 
-        {/* Modal Lihat Daftar Quiz unchanged, see original file */}
+        {}
         {showViewQuizModal && selectedMateriForViewQuiz && (
             <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-40">
                 <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-gray-200">
@@ -357,6 +378,7 @@ const MateriAdmin = () => {
                   <th className="p-4 text-sm font-semibold tracking-wider text-left text-gray-700">Tipe</th>
                   <th className="p-4 text-sm font-semibold tracking-wider text-center text-gray-700">Jumlah Quiz</th>
                   <th className="p-4 text-sm font-semibold tracking-wider text-left text-gray-700">Resource</th>
+                   <th className="p-4 text-sm font-semibold tracking-wider text-center text-gray-700">Order</th> {}
                   <th className="p-4 text-sm font-semibold tracking-wider text-center text-gray-700">Aksi</th>
                 </tr>
               </thead>
@@ -377,7 +399,7 @@ const MateriAdmin = () => {
                     <td className="p-4 text-sm text-gray-600 max-w-xs truncate">
                       {materi.TIPE_MATERI === "Dokumen" && materi.LINK_DOKUMEN ? (
                         <a
-                            href={`${API_BASE_URL}/${materi.LINK_DOKUMEN.startsWith('uploads/') ? materi.LINK_DOKUMEN : 'uploads/' + materi.LINK_DOKUMEN }`}
+                            href={`${API_BASE_URL}/uploads/${materi.LINK_DOKUMEN}`} 
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 underline hover:text-blue-800"
@@ -395,6 +417,7 @@ const MateriAdmin = () => {
                         </a>
                        ) : materi.ISI_TEKS ? (<span className="italic">Teks Materi</span>) : ('-')}
                     </td>
+                     <td className="p-4 text-sm text-gray-600 text-center">{materi.ORDER_INDEX !== null && materi.ORDER_INDEX !== undefined ? materi.ORDER_INDEX : '-'}</td> {}
                     <td className="p-4 text-sm whitespace-nowrap text-center">
                       <div className="flex justify-center items-center gap-2">
                           <button onClick={() => openAddQuizModal(materi)} className="p-2 bg-green-100 text-green-600 rounded-md hover:bg-green-200 focus:ring-1 focus:ring-green-400 transition-all" title="Tambah Pertanyaan Quiz"><FaPlusSquare /></button>
@@ -410,7 +433,7 @@ const MateriAdmin = () => {
                       </div>
                     </td>
                   </tr>
-                )) : (<tr><td colSpan="6" className="p-6 text-sm text-gray-500 text-center italic">Belum ada materi yang ditambahkan. Silakan tambahkan materi baru menggunakan form di atas.</td></tr>)}
+                )) : (<tr><td colSpan="7" className="p-6 text-sm text-gray-500 text-center italic">Belum ada materi yang ditambahkan. Silakan tambahkan materi baru menggunakan form di atas.</td></tr>)} {}
               </tbody>
             </table>
           </div>

@@ -1,10 +1,10 @@
-// src/components/Admin/DashboardAdmin.jsx
+
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaEye, FaCrown, FaChartLine,
   FaUsers, FaBookOpen, FaExpand, FaSignOutAlt, FaSpinner,
-  FaTags, FaUniversity // FaClipboardList dihapus karena cardnya dihapus
+  FaTags, FaUniversity 
 } from "react-icons/fa";
 import axios from "axios";
 import { Doughnut, Bar } from "react-chartjs-2";
@@ -96,9 +96,9 @@ const DashboardAdmin = () => {
 
   const [allUsers, setAllUsers] = useState([]);
   const [allMateriData, setAllMateriData] = useState([]);
-  // allQuizAttempts tetap diambil, mungkin berguna di masa depan atau untuk debug
+
   const [allQuizAttempts, setAllQuizAttempts] = useState([]); 
-  const [stats, setStats] = useState({ siswa: 0, materi: 0, percobaanKuis: 0 }); // percobaanKuis tetap ada di state
+  const [stats, setStats] = useState({ siswa: 0, materi: 0, percobaanKuis: 0 });
   const [siswaTerbaru, setSiswaTerbaru] = useState([]);
 
   const initialChartDataset = { label: '', data: [], backgroundColor: 'transparent', borderColor: 'transparent' };
@@ -146,7 +146,7 @@ const DashboardAdmin = () => {
 
       let currentPercobaanKuisCount = 0;
       if (Array.isArray(quizAttemptsRes.data)) {
-        setAllQuizAttempts(quizAttemptsRes.data); // Tetap set state ini
+        setAllQuizAttempts(quizAttemptsRes.data); 
         currentPercobaanKuisCount = quizAttemptsRes.data.length;
       } else {
         console.warn("DashboardAdmin: Data percobaan kuis tidak valid.", quizAttemptsRes.data);
@@ -368,14 +368,14 @@ const DashboardAdmin = () => {
 
         {!loading && !error && (
           <>
-            {/* Stat Cards Section - Disesuaikan menjadi 2 kolom jika diinginkan */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <StatCard icon={FaUsers} title="Total Siswa" value={stats.siswa} subtitle="Pembelajar aktif" iconBgColor="bg-gradient-to-br from-blue-500 to-sky-600" cardBgGradient="bg-white hover:bg-blue-50/50" />
               <StatCard icon={FaBookOpen} title="Total Materi" value={stats.materi} subtitle="Konten tersedia" iconBgColor="bg-gradient-to-br from-green-500 to-emerald-600" cardBgGradient="bg-white hover:bg-green-50/50" />
-              {/* StatCard untuk Percobaan Kuis dihapus dari tampilan atas, tapi nilai masih ada di state `stats` */}
+              {}
             </div>
             
-            {/* Charts Section */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8">
               <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 hover:shadow-2xl transition-shadow">
                 <div className="h-80 sm:h-96">

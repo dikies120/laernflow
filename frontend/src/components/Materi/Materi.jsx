@@ -1,4 +1,4 @@
-// src/components/Materi.jsx
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -61,7 +61,7 @@ const Materi = () => {
     }
 
     setLoading(true);
-    fetch("http://localhost:5000/api/materi/crud-materi")
+    fetch("http:
       .then(res => {
         if (!res.ok) {
           return res.text().then(text => {

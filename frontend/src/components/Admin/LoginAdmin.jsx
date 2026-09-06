@@ -1,4 +1,4 @@
-// src/pages/admin/LoginAdmin.jsx
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShieldAlt, FaSignInAlt } from "react-icons/fa";
@@ -15,7 +15,7 @@ const LoginAdmin = () => {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/login-admin", {
+      const res = await fetch("http:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -24,7 +24,7 @@ const LoginAdmin = () => {
       if (res.ok && data.token) {
         localStorage.setItem("adminToken", data.token);
         if (data.admin) {
-            localStorage.setItem("adminData", JSON.stringify(data.admin)); // Simpan data admin jika ada
+            localStorage.setItem("adminData", JSON.stringify(data.admin)); 
         }
         navigate("/admin/dashboardadmin");
       } else {

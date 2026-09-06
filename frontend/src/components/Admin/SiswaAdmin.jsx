@@ -1,14 +1,27 @@
-// src/pages/admin/SiswaAdmin.jsx
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { 
   FaChartLine, FaBookOpen, FaUsers, FaEdit, FaTrash, FaSpinner, 
   FaGraduationCap, FaTimes, FaEye, FaListAlt, FaCheckCircle, 
-  FaHourglassHalf, FaPlus, FaExpand, FaSignOutAlt, FaCrown, FaPuzzlePiece // Tambahkan ikon yang mungkin diperlukan
+  FaHourglassHalf, FaPlus, FaExpand, FaSignOutAlt, FaCrown, FaPuzzlePiece, FaUserGraduate
 } from "react-icons/fa";
 
 const API_BASE_URL = "http://localhost:5000";
+
+
+const generateAvatarUrl = (username) => {
+  const params = new URLSearchParams();
+  
+  params.append('name', username || 'S'); 
+  params.append('background', 'random');
+  params.append('color', 'fff');
+  params.append('size', '36');
+  params.append('font-size', '0.4'); 
+  params.append('rounded', 'true');
+  return `https://ui-avatars.com/api/?${params.toString()}`;
+};
 
 const SiswaAdmin = () => {
   const navigate = useNavigate();
@@ -70,13 +83,11 @@ const SiswaAdmin = () => {
   const handleSaveEdit = async () => {
     if (!editingSiswa) return;
     try {
-      // Asumsi payload API update profil menggunakan field seperti ini
       const payload = {
         USERNAME: editFormData.USERNAME,
         EMAIL: editFormData.EMAIL,
         KELAS: editFormData.KELAS,
         NAMA_LENGKAP: editFormData.NAMA_LENGKAP,
-        // Anda mungkin perlu mengirim field lain jika API PUT /:userId/profile mengharapkannya
       };
       await axios.put(`${API_BASE_URL}/api/users/${editingSiswa.id}/profile`, payload);
       setEditingSiswa(null); fetchUsers();
@@ -145,10 +156,10 @@ const SiswaAdmin = () => {
             </button>
           </div>
           <div className="p-6 overflow-y-auto flex-grow custom-scrollbar">
-            {loadingDetails && ( /* ... loading JSX ... */ 
+            {loadingDetails && ( 
               <div className="flex flex-col justify-center items-center py-16 text-center"> <FaSpinner className="animate-spin text-4xl text-purple-600 mb-3" /> <p className="text-gray-600 text-lg">Memuat detail progres siswa...</p> </div>
             )}
-            {detailsError && !loadingDetails && ( /* ... error JSX ... */ 
+            {detailsError && !loadingDetails && ( 
               <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 my-4 rounded-md shadow"> <p className="font-bold text-lg">Terjadi Kesalahan</p> <p>{detailsError}</p> </div>
             )}
             {!loadingDetails && !detailsError && (
@@ -245,7 +256,6 @@ const SiswaAdmin = () => {
       <main className={`flex-1 p-6 sm:p-8 ${sidebarCollapsed ? 'ml-[5.5rem]' : 'ml-72'} transition-all duration-300`}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-3">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Manajemen Data Siswa</h2>
-            {/* <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center shadow-md text-sm font-medium"> <FaPlus className="mr-2"/> Tambah Siswa </button> */}
         </div>
 
         {loading && ( <div className="flex flex-col justify-center items-center py-10 text-center"><FaSpinner className="animate-spin text-4xl text-purple-600 mb-3" /> <p className="text-gray-600 text-lg">Memuat data siswa...</p></div> )}
@@ -254,32 +264,40 @@ const SiswaAdmin = () => {
         {!loading && !error && (
           <div className="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[768px] text-sm text-left text-gray-700">
+              <table className="w-full min-w-[700px] text-sm text-left text-gray-700">
                 <thead className="text-xs text-gray-700 uppercase bg-purple-50/70 border-b-2 border-gray-200">
                   <tr>
                     <th scope="col" className="px-6 py-4">Profil</th>
                     <th scope="col" className="px-6 py-4">Nama Pengguna & Lengkap</th>
                     <th scope="col" className="px-6 py-4">Email</th>
                     <th scope="col" className="px-6 py-4">Kelas</th>
-                    <th scope="col" className="px-6 py-4 text-center">Skor Rata-Rata</th>
                     <th scope="col" className="px-6 py-4 text-center">Tgl Daftar</th>
                     <th scope="col" className="px-6 py-4 text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {siswaList.length === 0 ? (
-                    <tr> <td colSpan="7" className="text-center py-12 text-gray-500 italic"> <FaUserGraduate className="mx-auto text-4xl mb-2 text-gray-400"/> Belum ada data siswa.</td> </tr>
+                    <tr> <td colSpan="6" className="text-center py-12 text-gray-500 italic"> <FaUserGraduate className="mx-auto text-4xl mb-2 text-gray-400"/> Belum ada data siswa.</td> </tr>
                   ) : (
                     siswaList.map((siswa) => (
                       <tr key={siswa.id} className="bg-white hover:bg-slate-50 transition-colors group">
-                        <td className="px-6 py-3"><img src={siswa.foto_profil ? (siswa.foto_profil.startsWith('http') ? siswa.foto_profil : `${API_BASE_URL}${siswa.foto_profil}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(siswa.username || 'S')}&background=random&color=fff&size=36&font-size=0.4&rounded=true`} alt="Profil" className="w-9 h-9 rounded-full object-cover shadow-sm border-2 border-white group-hover:border-purple-200" onError={(e) => { e.target.onerror = null; e.target.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(siswa.username || 'S')}&background=random&color=fff&size=36&font-size=0.4&rounded=true`}} /></td>
+                        <td className="px-6 py-3">
+                          <img 
+                            src={siswa.foto_profil ? (siswa.foto_profil.startsWith('http') ? siswa.foto_profil : `${API_BASE_URL}${siswa.foto_profil}`) : generateAvatarUrl(siswa.username)} 
+                            alt="Profil" 
+                            className="w-9 h-9 rounded-full object-cover shadow-sm border-2 border-white group-hover:border-purple-200" 
+                            onError={(e) => { 
+                              e.target.onerror = null; 
+                              e.target.src = generateAvatarUrl(siswa.username);
+                            }} 
+                          />
+                        </td>
                         <td className="px-6 py-3 whitespace-nowrap">
                           {editingSiswa?.id === siswa.id ? <input type="text" name="USERNAME" value={editFormData.USERNAME} onChange={handleEditFormChange} className="px-2 py-1 border rounded-md w-full text-sm"/> : <span className="font-semibold text-purple-700">{siswa.username}</span>}
                           {editingSiswa?.id === siswa.id ? <input type="text" name="NAMA_LENGKAP" value={editFormData.NAMA_LENGKAP} onChange={handleEditFormChange} className="mt-1 px-2 py-1 border rounded-md w-full text-sm"/> : (siswa.nama_lengkap && <div className="text-xs text-gray-500">{siswa.nama_lengkap}</div>)}
                         </td>
                         <td className="px-6 py-3 text-gray-600">{editingSiswa?.id === siswa.id ? <input type="email" name="EMAIL" value={editFormData.EMAIL} onChange={handleEditFormChange} className="px-2 py-1 border rounded-md w-full text-sm"/> : siswa.email}</td>
                         <td className="px-6 py-3 text-gray-600">{editingSiswa?.id === siswa.id ? <input type="text" name="KELAS" value={editFormData.KELAS} onChange={handleEditFormChange} className="px-2 py-1 border rounded-md w-20 text-sm"/> : (siswa.kelas || "-")}</td>
-                        <td className="px-6 py-3 text-center font-semibold"><span className={`px-2.5 py-1 rounded-full text-xs ${(Number(siswa.average_score) || 0) >= 75 ? 'bg-green-100 text-green-700 border border-green-200' : (Number(siswa.average_score) || 0) >= 50 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>{typeof siswa.average_score === 'number' ? `${Number(siswa.average_score).toFixed(1)}%` : "-"}</span></td>
                         <td className="px-6 py-3 text-center text-gray-500 text-xs">{siswa.tanggal_daftar ? new Date(siswa.tanggal_daftar).toLocaleDateString('id-ID', { day:'2-digit', month: 'short', year: 'numeric' }) : '-'}</td>
                         <td className="px-6 py-3 text-center">
                           {editingSiswa?.id === siswa.id ? (

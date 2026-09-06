@@ -10,8 +10,8 @@ export const UserProvider = ({ children }) => {
         return storedUser ? JSON.parse(storedUser) : null;
     } catch (error) {
         console.error("Error parsing stored user JSON:", error);
-        localStorage.removeItem('user'); // Hapus data korup
-        sessionStorage.removeItem('user'); // Hapus data korup
+        localStorage.removeItem('user'); 
+        sessionStorage.removeItem('user'); 
         return null;
     }
   });
@@ -21,14 +21,14 @@ export const UserProvider = ({ children }) => {
     setUser(userData);
     if (rememberMe) {
       localStorage.setItem('user', JSON.stringify(userData));
-      sessionStorage.removeItem('user'); // Hapus dari session jika ada
+      sessionStorage.removeItem('user'); 
     } else {
       sessionStorage.setItem('user', JSON.stringify(userData));
-      localStorage.removeItem('user'); // Hapus dari local jika ada
+      localStorage.removeItem('user'); 
     }
   };
 
-  // Fungsi untuk logout
+  
   const logoutUser = () => {
     setUser(null);
     localStorage.removeItem('user');
