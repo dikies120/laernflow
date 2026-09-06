@@ -61,7 +61,7 @@ const Materi = () => {
     }
 
     setLoading(true);
-    fetch("http:
+    fetch("http://localhost:5000/api/materi/crud-materi")
       .then(res => {
         if (!res.ok) {
           return res.text().then(text => {

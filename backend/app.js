@@ -1,8 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
-const oracledb = require('oracledb');
-const { closePoolAndExit } = require('./db'); 
+const { closePoolAndExit, initPool } = require('./config/db'); 
 const cors = require('cors');
 const adminRoutes = require('./routes/admin');
 const materiRoutes = require('./routes/materi');
@@ -36,31 +35,29 @@ app.use('/api/materi', materiRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/quiz', quizRoutes);
 
-
-async function initOracleClient() {
+async function initPostgresClient() {
   try {
-    await oracledb.createPool({
-      user: process.env.DB_USER || 'C##LEARNFLOW',
-      password: process.env.DB_PASSWORD || 'learnflow',
-      connectString: process.env.DB_CONNECT_STRING || 'DESKTOP-5E9D24S/scl',
-      poolMin: 2,
-      poolMax: 10,
-      poolIncrement: 1
+    initPool({
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      database: process.env.DB_DATABASE || 'learnflow_db',
     });
-    console.log('Oracle database pool initialized');
+    console.log('PostgreSQL database pool initialized');
   } catch (err) {
-    console.error('Oracle pool initialization error:', err);
+    console.error('PostgreSQL pool initialization error:', err);
     process.exit(1);
   }
 }
 
 app.get('/', (req, res) => {
-  res.send('Oracle + Express Auth API Ready');
+  res.send('PostgreSQL + Express Auth API Ready');
 });
 
 async function startServer() {
   try {
-    await initOracleClient();
+    await initPostgresClient();
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });

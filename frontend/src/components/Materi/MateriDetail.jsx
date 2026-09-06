@@ -39,7 +39,7 @@ const MateriDetail = () => {
   const [lastQuizAttempt, setLastQuizAttempt] = useState(null);
   const [loadingLastAttempt, setLoadingLastAttempt] = useState(false);
 
-  const API_BASE_URL = "http:
+  const API_BASE_URL = "http://localhost:5000";
 
   useEffect(() => {
     let storedUserData = localStorage.getItem("user") || sessionStorage.getItem("user");
